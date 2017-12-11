@@ -52,9 +52,29 @@
 
         var makeResponseHandler = function (form$, errorDisplay$, onError, onSuccess) {
           return function (status, response) {
+            var errorMessages = {
+              incorrect_number: Drupal.t("The card number is incorrect."),
+              invalid_request_error: Drupal.t("Could not find payment information."),
+              invalid_number: Drupal.t("The card number is not a valid credit card number."),
+              invalid_expiry_month: Drupal.t("The card's expiration month is invalid."),
+              invalid_expiry_year: Drupal.t("The card's expiration year is invalid."),
+              invalid_cvc: Drupal.t("The card's security code is invalid."),
+              expired_card: Drupal.t("The card has expired."),
+              incorrect_cvc: Drupal.t("The card's security code is incorrect."),
+              incorrect_zip: Drupal.t("The card's zip code failed validation."),
+              card_declined: Drupal.t("The card was declined."),
+              missing: Drupal.t("There is no card on a customer that is being charged."),
+              processing_error: Drupal.t("An error occurred while processing the card."),
+              rate_limit: Drupal.t("An error occurred due to requests hitting the API too quickly. Please let us know if you're consistently running into this error.")
+            };
+
             if (response.error) {
               // Show the errors on the form.
-              errorDisplay$.html($("<div id='commerce-stripe-validation-errors' class='messages error'></div>").html(response.error.message));
+              var code = response.error.code;
+              if (code == null) {
+                code = response.error.type;
+              }
+              errorDisplay$.html($("<div id='commerce-stripe-validation-errors' class='messages error'></div>").html(errorMessages[code]));
 
               onError && onError(form$);
             }
