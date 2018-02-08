@@ -495,7 +495,8 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
 
   // Stripe token should be empty? Need to store it in form storage to prevent overwriting during FAPI.
   $stripe_token = !empty($pane_values['stripe_token']) ? check_plain(trim($pane_values['stripe_token'])) : '';
-  _commerce_stripe_form_configure_stripe_common($form, $stripe_token, $integration_type);
+
+  _commerce_stripe_form_configure_stripe_common($form, $stripe_token, $payment_method['instance_id']);
 
   // To display validation errors.
   $form['errors'] = array(
@@ -981,7 +982,8 @@ function commerce_stripe_cardonfile_create_form($form, &$form_state, $op, $card_
 
   $public_key = _commerce_stripe_load_setting('public_key');
   $stripe_token = !empty($form_state['values']['stripe_token']) ? $form_state['values']['stripe_token'] : '';
-  _commerce_stripe_form_configure_stripe_common($form, $stripe_token, $stripe_integration);
+
+  _commerce_stripe_form_configure_stripe_common($form, $stripe_token, $card_data->instance_id);
 
   $payment_method = commerce_payment_method_instance_load($card_data->instance_id);
 
@@ -1095,13 +1097,17 @@ function _commerce_stripe_form_configure_stripe_checkout($checkout_settings, $ch
 }
 
 /**
+ * Adds stripe_token hidden field and appropriate javascript files.
+ * Adds publicKey and integration_type stripe variables.
+ *
  * @param $form
  * @param $stripe_token
- * @param $public_key
- * @param $integration_type
+ * @param $instance_id
  */
-function _commerce_stripe_form_configure_stripe_common(&$form, $stripe_token, $integration_type = COMMERCE_STRIPE_DEFAULT_INTEGRATION) {
-  $public_key = _commerce_stripe_load_setting('public_key');
+// @todo: Why mixing camel and snake case in JS variables?!
+function _commerce_stripe_form_configure_stripe_common(&$form, $stripe_token, $instance_id) {
+  $public_key = _commerce_stripe_load_setting('public_key', NULL, $instance_id);
+  $integration_type = _commerce_stripe_load_setting('integration_type', COMMERCE_STRIPE_DEFAULT_INTEGRATION, $instance_id);
 
   // Add stripe token field. This field is a container for token received from
   // Stripe API's response handler.
