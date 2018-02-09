@@ -1057,14 +1057,14 @@ function commerce_stripe_cardonfile_create_form($form, &$form_state, $op, $card_
     '#disabled' => empty($valid_cards) ? TRUE : FALSE,
   );
 
-  // Create a billing profile object and add the address form.
-  $profile = commerce_customer_profile_new('billing', $account->uid);
-
-  // Add the entity context of the current cart order.
-  $profile->entity_context = array(
-    'entity_type' => 'commerce_cardonfile',
-    'entity_id' => $card_data->card_id,
-  );
+  if (!($profile = commerce_single_address_active_profile_load($account->uid, 'billing'))) {
+    $profile = commerce_customer_profile_new('billing', $account->uid);
+    // Add the entity context of the current cart order.
+    $profile->entity_context = array(
+      'entity_type' => 'commerce_cardonfile',
+      'entity_id' => $card_data->card_id,
+    );
+  }
 
   $form['commerce_customer_profile'] = array(
     '#type' => 'value',
