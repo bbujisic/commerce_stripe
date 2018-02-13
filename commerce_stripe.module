@@ -149,7 +149,6 @@ function commerce_stripe_commerce_payment_method_info() {
   // Note that this code is intentionally duplicated to avoid the infinite
   // recursion that would occur if we called _commerce_stripe_load_settings().
   // @todo: Explore using a static variable to avoid that recursion.
-  $stripe_integration = COMMERCE_STRIPE_DEFAULT_INTEGRATION;
   $cardonfile = FALSE;
 
   $payment_method_rule = rules_config_load('commerce_payment_commerce_stripe');
@@ -162,10 +161,6 @@ function commerce_stripe_commerce_payment_method_info() {
       }
 
       if (!empty($action->settings['payment_method']['method_id']) && $action->settings['payment_method']['method_id'] == 'commerce_stripe') {
-        // Default to Stripe.js if no integration_type has been chosen.
-        if (!empty($action->settings['payment_method']['settings']['integration_type'])) {
-          $stripe_integration = $action->settings['payment_method']['settings']['integration_type'];
-        }
         $cardonfile = !empty($action->settings['payment_method']['settings']['cardonfile']) ? TRUE : FALSE;
         break;
       }
