@@ -1077,35 +1077,6 @@ function commerce_stripe_cardonfile_create_form($form, &$form_state, $op, $card_
   // Add a validation callback so that we can call field_attach functions.
   $form['#validate'][] = 'commerce_stripe_cardonfile_create_validate';
 
-  // Tweak the form to remove the fieldset from the address field if there
-  // is only one on this profile.
-  $addressfields = array();
-
-  foreach (commerce_info_fields('addressfield', 'commerce_customer_profile') as $field_name => $field) {
-    if (!empty($form['address'][$field_name]['#language'])) {
-      $langcode = $form['address'][$field_name]['#language'];
-
-      // Only consider this addressfield if it's represented on the form.
-      if (!empty($form['address'][$field_name][$langcode])) {
-        $addressfields[] = array($field_name, $langcode);
-      }
-    }
-  }
-
-  // Check to ensure only one addressfield was found on the form.
-  if (count($addressfields) == 1) {
-    list($field_name, $langcode) = array_shift($addressfields);
-
-    foreach (element_children($form['address'][$field_name][$langcode]) as $delta) {
-      // Don't mess with the "Add another item" button that could be present.
-      if ($form['address'][$field_name][$langcode][$delta]['#type'] != 'submit') {
-        $form['address'][$field_name][$langcode][$delta]['#type'] = 'container';
-      }
-    }
-  }
-
-  commerce_stripe_set_addressfield_class_names($form['address']);
-
   $form['errors'] = array(
     '#markup' => '<div id="card-errors"></div>'
   );
