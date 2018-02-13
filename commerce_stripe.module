@@ -708,7 +708,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   if (!empty($save_card)) {
     $profile = NULL;
 
-    if (!empty($order->commerce_customer_billing)) {
+    if (variable_get('commerce_stripe_enable_customer_profile', 1) && !empty($order->commerce_customer_billing)) {
       $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
       // Get the billing profile in use and associate it with the card
       $profile = $order_wrapper->commerce_customer_billing->value();
@@ -1058,24 +1058,26 @@ function commerce_stripe_cardonfile_create_form($form, &$form_state, $op, $card_
   );
 
   // Create a billing profile object and add the address form.
-  $profile = commerce_customer_profile_new('billing', $account->uid);
+  if (variable_get('commerce_stripe_enable_customer_profile', 1)) {
+    $profile = commerce_customer_profile_new('billing', $account->uid);
 
-  // Add the entity context of the current cart order.
-  $profile->entity_context = array(
-    'entity_type' => 'commerce_cardonfile',
-    'entity_id' => $card_data->card_id,
-  );
+    // Add the entity context of the current cart order.
+    $profile->entity_context = array(
+      'entity_type' => 'commerce_cardonfile',
+      'entity_id' => $card_data->card_id,
+    );
 
-  $form['commerce_customer_profile'] = array(
-    '#type' => 'value',
-    '#value' => $profile,
-  );
+    $form['commerce_customer_profile'] = array(
+      '#type' => 'value',
+      '#value' => $profile,
+    );
 
-  // Add the field widgets for the profile.
-  field_attach_form('commerce_customer_profile', $profile, $form, $form_state);
+    // Add the field widgets for the profile.
+    field_attach_form('commerce_customer_profile', $profile, $form, $form_state);
 
-  // Add a validation callback so that we can call field_attach functions.
-  $form['#validate'][] = 'commerce_stripe_cardonfile_create_validate';
+    // Add a validation callback so that we can call field_attach functions.
+    $form['#validate'][] = 'commerce_stripe_cardonfile_create_validate_customer_profile';
+  }
 
   // Tweak the form to remove the fieldset from the address field if there
   // is only one on this profile.
@@ -1213,7 +1215,7 @@ function _commerce_stripe_form_add_credit_card_form(&$form) {
 /**
  * Validation callback for card on file creation.
  */
-function commerce_stripe_cardonfile_create_validate($form, &$form_state) {
+function commerce_stripe_cardonfile_create_validate_customer_profile($form, &$form_state) {
   $profile = $form_state['values']['commerce_customer_profile'];
   field_attach_form_validate('commerce_customer_profile', $profile, $form, $form_state);
 }
@@ -1373,7 +1375,9 @@ function commerce_stripe_cardonfile_create($form, &$form_state, $payment_method,
   // Associate a billing profile if we have one.
   $profile = NULL;
 
-  if (isset($form_state['values']['commerce_customer_profile'])){
+  // Theoretically, we don't need to check the commerce_stripe_enable_customer_profile variable,
+  // as commerce_customer_profile won't be set.
+  if (variable_get('commerce_stripe_enable_customer_profile', 1) && isset($form_state['values']['commerce_customer_profile'])) {
     $profile = $form_state['values']['commerce_customer_profile'];
     $profile->status = TRUE;
 
@@ -1440,7 +1444,7 @@ function commerce_stripe_cardonfile_update($form, &$form_state, $payment_method,
 
     // Update the associated billing address and associate it with the card on file.
     $billing_profile = NULL;
-    if(isset($form_state['values']['commerce_customer_profile'])){
+    if (variable_get('commerce_stripe_enable_customer_profile', 1) && isset($form_state['values']['commerce_customer_profile'])){
       $billing_profile = $form_state['values']['commerce_customer_profile'];
       $billing_profile->status = TRUE;
 
