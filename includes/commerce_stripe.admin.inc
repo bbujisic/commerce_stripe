@@ -16,14 +16,13 @@ function commerce_stripe_refund_form($form, &$form_state, $order, $transaction) 
   $form_state['payment_method'] = $payment_method;
 
    // Make sure the library is available.
-  if (!commerce_stripe_load_library()) {
+  if (!commerce_stripe_load_library($payment_method)) {
     drupal_set_message(t('Cannot load the Stripe PHP library'), 'error');
     return $form;
   }
 
   // Make sure we can load the original charge object.
   try {
-    \Stripe\Stripe::setApiKey(trim($payment_method['settings']['secret_key']));
     $charge = Stripe\Charge::retrieve($transaction->remote_id);
     $form_state['stripe_charge'] = $charge;
   }
@@ -101,7 +100,7 @@ function commerce_stripe_refund_form_submit($form, &$form_state) {
   global $user;
 
   // Make sure the library is available.
-  if (!commerce_stripe_load_library()) {
+  if (!commerce_stripe_load_library($payment_method)) {
     drupal_set_message(t('Cannot load the Stripe PHP library'), 'error');
     return FALSE;
   }
@@ -114,7 +113,6 @@ function commerce_stripe_refund_form_submit($form, &$form_state) {
   );
 
   try {
-    Stripe\Stripe::setApiKey(trim($payment_method['settings']['secret_key']));
     $refund = Stripe\Refund::create($data);
 
     if (is_object($refund)) {
